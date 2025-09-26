@@ -6,7 +6,7 @@ export default function EmployeeList() {
   const navigate = useNavigate(); // 🔹 navigation hook
 
   useEffect(() => {
-    fetch("http://localhost/system/get_employees.php")
+    fetch("http://localhost/salary-backend/fetch.php")
       .then((res) => res.json())
       .then((data) => setEmployees(data))
       .catch((err) => console.error("Error fetching employees:", err));

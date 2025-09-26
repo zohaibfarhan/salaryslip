@@ -19,17 +19,35 @@ export default function EmployeeForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Form Data:", form);
+    // ✅ form ke andar se values nikalna hai
+    const formData = {
+      name: form.name,
+      doj: form.doj,
+      designation: form.designation,
+      email: form.email,
+      mainSalary: form.mainSalary,
+    };
 
-    const response = await fetch("http://localhost/system/save_employee.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    console.log("Form Data:", formData);
 
-    const result = await response.json();
-    console.log("Server Response:", result);
-    alert(result.message || "Error saving employee");
+    try {
+      const res = await fetch("http://localhost/salary-backend/save.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      console.log("Server Response:", data);
+
+      if (data.status === "success") {
+        alert("Employee saved successfully!");
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+    }
   };
 
   return (

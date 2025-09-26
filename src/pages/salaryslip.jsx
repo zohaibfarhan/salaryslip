@@ -58,7 +58,7 @@ export default function SalarySlip() {
       net_salary: netSalary,
     };
 
-    fetch("http://localhost/system/save_salary_slip.php", {
+    fetch("http://localhost/salary-backend/save_salary_slip.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(slipData),
@@ -181,7 +181,7 @@ export default function SalarySlip() {
             <input
               className="border rounded-lg p-1 w-24 text-right text-black"
               type="number"
-              values={medicalAllowance}
+              value={medicalAllowance}
             />
           </div>
           <div className="text-left ml-8">Arrears / Bonus </div>

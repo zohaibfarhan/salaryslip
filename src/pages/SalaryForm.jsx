@@ -5,7 +5,7 @@ export default function SalaryForm() {
   const [employee, setEmployee] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-  const [employees, setEmployees] = useState([]); // dynamic employees
+  const [employees, setEmployees] = useState([]); // ✅ backend se employees aayenge
 
   const navigate = useNavigate();
 
@@ -25,11 +25,17 @@ export default function SalaryForm() {
   ];
   const years = [2023, 2024, 2025];
 
-  // 🔹 Fetch employees from backend
+  // ✅ Backend se employees fetch karo
   useEffect(() => {
-    fetch("http://localhost/system/get_employees.php")
+    fetch("http://localhost/salary-backend/fetch.php")
       .then((res) => res.json())
-      .then((data) => setEmployees(data))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEmployees(data);
+        } else {
+          console.error("Invalid employee data:", data);
+        }
+      })
       .catch((err) => console.error("Error fetching employees:", err));
   }, []);
 
@@ -39,7 +45,7 @@ export default function SalaryForm() {
       return;
     }
 
-    // 🔹 Selected employee object find karna
+    // ✅ Selected employee find karo
     const selectedEmp = employees.find(
       (emp) => String(emp.id) === String(employee)
     );
@@ -49,7 +55,7 @@ export default function SalaryForm() {
       return;
     }
 
-    // 🔹 Navigate to SalarySlip with data
+    // ✅ SalarySlip page pe navigate with data
     navigate("/salaryslip", {
       state: {
         employee_id: selectedEmp.id,
@@ -63,12 +69,13 @@ export default function SalaryForm() {
 
   return (
     <div className="p-6 w-1/2 mx-auto bg-slate-50 border rounded shadow">
-      <div className=" text-right mb-4">
+      {/* 🔹 Add Employee Button */}
+      <div className="text-right mb-4">
         <button
           onClick={() => navigate("/empfoam")}
-          className="hover:bg-white hover:text-black hover:border-black hover:border-2  bg-green-500 text-white px-4 py-2 rounded"
+          className="hover:bg-white hover:text-black hover:border-black hover:border-2 bg-green-500 text-white px-4 py-2 rounded"
         >
-          + New Employee
+          + Add Employee
         </button>
       </div>
 
@@ -129,7 +136,7 @@ export default function SalaryForm() {
       <div className="flex justify-end">
         <button
           onClick={handleNext}
-          className=" hover:bg-white hover:text-black hover:border-black hover:border-2 bg-blue-500 text-white px-4 py-2 rounded"
+          className="hover:bg-white hover:text-black hover:border-black hover:border-2 bg-blue-500 text-white px-4 py-2 rounded"
         >
           Next
         </button>
