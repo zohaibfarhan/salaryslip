@@ -25,6 +25,7 @@ export default function EmployeeList() {
             <th className="border px-2">Designation</th>
             <th className="border px-2">Email</th>
             <th className="border px-2">Salary</th>
+            <th className="border px-2">Salary Slip</th> {/* ✅ new column */}
           </tr>
         </thead>
         <tbody>
@@ -36,6 +37,14 @@ export default function EmployeeList() {
               <td className="border px-2">{emp.designation}</td>
               <td className="border px-2">{emp.email}</td>
               <td className="border px-2">{emp.mainSalary}</td>
+              <td className="border px-2 text-center">
+                <button
+                  onClick={() => navigate(`/select-slip/${emp.id}`)} // ✅ navigate to new form
+                  className=" hover:text-sky-500 px-3 py-1 rounded"
+                >
+                  Salary Slip
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

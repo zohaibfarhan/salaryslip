@@ -1,17 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import Logo1 from "../assets/img/logo1.png";
+import Logo2 from "../assets/img/logo2.png";
 
 export default function SalarySlip() {
-  // 🔹 SalaryForm se data receive karna
+  // 🔹 SalaryForm / SelectForm se data receive karna
   const location = useLocation();
-  const { employee_id, employee_name, month, year, mainSalary } =
-    location.state || {};
+  const {
+    mode, // ✅ yahan se milega (create / view)
+    employee_id,
+    employee_name,
+    designation,
+    month,
+    year,
+    mainSalary,
+  } = location.state || {};
 
   // 🔹 State for dynamic inputs
-  const [salary] = useState(mainSalary || 0);
+  const [salary, setSalary] = useState(mainSalary || 0);
   const [leaves, setLeaves] = useState("");
   const [incomeTax, setIncomeTax] = useState("");
   const [bonus, setBonus] = useState("");
+  const [error, setError] = useState("");
+
+  // ✅ Agar view mode hai to DB se salary slip load karni hai
+  useEffect(() => {
+    if (mode === "view" && employee_id && month && year) {
+      fetch(
+        `http://localhost/salary-backend/get_salary_slip.php?employee_id=${employee_id}&month=${month}&year=${year}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === "success") {
+            const d = data.data;
+            setSalary(d.main_salary);
+            setLeaves(d.leaves);
+            setIncomeTax(d.income_tax);
+            setBonus(d.bonus);
+          } else {
+            setError("Salary slip not found for this month/year");
+          }
+        })
+        .catch(() => setError("Failed to fetch salary slip"));
+    }
+  }, [mode, employee_id, month, year]);
+
+  if (error) {
+    return <p className="text-red-500 text-center mt-10">{error}</p>;
+  }
 
   // 🔹 Convert to numbers
   const salaryNum = parseFloat(salary) || 0;
@@ -36,7 +72,32 @@ export default function SalarySlip() {
   // 🔹 Net Salary
   const netSalary = gross - totalDeductions + totalAdditions;
 
-  // 🔹 Save to Database
+  const handlePrint = () => {
+    const slipContent = document.getElementById("slip-area").innerHTML;
+    const printWindow = window.open("", "", "width=800,height=600");
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Salary Slip</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          td, th { border: 1px solid #000; padding: 8px; text-align: left; }
+          h1, h2, h3 { text-align: center; }
+        </style>
+      </head>
+      <body>
+        ${slipContent}
+      </body>
+    </html>
+  `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+
+  // 🔹 Save to Database (sirf create mode me)
   const handleSave = () => {
     const slipData = {
       employee_id,
@@ -75,16 +136,29 @@ export default function SalarySlip() {
   };
 
   return (
-    <div className="min-h-[120vh] bg-slate-500 text-white flex justify-center items-start p-6">
+    <div
+      id="slip-area"
+      className="min-h-[120vh] bg-slate-500 text-white flex justify-center items-start p-6"
+    >
       <div className="w-1/2 bg-slate-500 shadow p-6">
+        <div className="grid grid-cols-2 items-center mt-4">
+          <div className="text-left flex justify-start">
+            <img src={Logo1} alt="First logo" className="h-full" />
+          </div>
+          <div className="text-right flex justify-end">
+            <img src={Logo2} alt="Second logo" className="w-44 " />
+          </div>
+        </div>
         {/* Header */}
         <h1 className="text-2xl font-bold text-center">SALARY SLIP</h1>
         <h2 className="text-lg text-center">
           FOR THE MONTH OF {month}, {year}
         </h2>
-        <h3 className="mb-6 text-center">{employee_name || "Employee Name"}</h3>
-
-        {/* Salary Input (read-only) */}
+        <h3 className="mb-6 text-center">
+          {employee_name || "Employee Name"}
+          {designation ? ` , ${designation}` : ""}
+        </h3>
+        {/* Salary Input (read-only always) */}
         <div className="mb-6">
           <label className="mr-2 font-medium">Main Salary (PKR):</label>
           <input
@@ -94,7 +168,6 @@ export default function SalarySlip() {
             className="border rounded-lg p-2 w-48 text-black bg-gray-200"
           />
         </div>
-
         {/* Salary Bifurcation */}
         <div className="grid grid-cols-2 gap-2 border p-3 mb-4">
           <div className="text-left font-semibold mb-2 mt-4 underline decoration-2 underline-offset-4 ">
@@ -107,6 +180,7 @@ export default function SalarySlip() {
               className="border rounded-lg p-1 w-24 text-right text-black"
               type="number"
               value={basic.toFixed(0)}
+              readOnly
             />
           </div>
           <div className="text-left ml-8">House Rent</div>
@@ -116,6 +190,7 @@ export default function SalarySlip() {
               className="border rounded-lg p-1 w-24 text-right text-black"
               type="number"
               value={house.toFixed(0)}
+              readOnly
             />
           </div>
           <div className="text-left ml-8">Utilities</div>
@@ -124,6 +199,7 @@ export default function SalarySlip() {
               className="border rounded-lg p-1 w-24 text-right text-black"
               type="number"
               value={utilities.toFixed(0)}
+              readOnly
             />
           </div>
           <div className="font-bold text-left ml-8 mt-3 ">Gross Salary</div>
@@ -131,7 +207,6 @@ export default function SalarySlip() {
             {gross.toFixed(0)}
           </div>
         </div>
-
         {/* Deductions */}
         <div className="grid grid-cols-2 gap-2 border p-3 mb-4">
           <div className="text-left font-semibold mt-4 mb-2 underline decoration-2 underline-offset-4">
@@ -144,6 +219,7 @@ export default function SalarySlip() {
               className="border rounded-lg p-1 w-24 text-right text-black ml-2"
               type="number"
               value={providentFund.toFixed(0)}
+              readOnly
             />
           </div>
           <div className="text-left ml-8">Leaves / Late Joining</div>
@@ -151,7 +227,8 @@ export default function SalarySlip() {
             <input
               type="number"
               value={leaves}
-              onChange={(e) => setLeaves(e.target.value)}
+              onChange={(e) => mode === "create" && setLeaves(e.target.value)}
+              readOnly={mode === "view"}
               className="border rounded-lg p-1 w-24 text-right text-black"
             />
           </div>
@@ -160,7 +237,10 @@ export default function SalarySlip() {
             <input
               type="number"
               value={incomeTax}
-              onChange={(e) => setIncomeTax(e.target.value)}
+              onChange={(e) =>
+                mode === "create" && setIncomeTax(e.target.value)
+              }
+              readOnly={mode === "view"}
               className="border rounded-lg p-1 w-24 text-right text-black"
             />
           </div>
@@ -169,7 +249,6 @@ export default function SalarySlip() {
             {totalDeductions.toFixed(0)}
           </div>
         </div>
-
         {/* Additions */}
         <div className="grid grid-cols-2 gap-2 border p-3 mb-4">
           <div className="text-left font-semibold mt-4 mb-2 underline decoration-2 underline-offset-4">
@@ -182,6 +261,7 @@ export default function SalarySlip() {
               className="border rounded-lg p-1 w-24 text-right text-black"
               type="number"
               value={medicalAllowance}
+              readOnly
             />
           </div>
           <div className="text-left ml-8">Arrears / Bonus </div>
@@ -189,7 +269,8 @@ export default function SalarySlip() {
             <input
               type="number"
               value={bonus}
-              onChange={(e) => setBonus(e.target.value)}
+              onChange={(e) => mode === "create" && setBonus(e.target.value)}
+              readOnly={mode === "view"}
               className="border rounded-lg p-1 w-24 text-right text-black"
             />
           </div>
@@ -204,16 +285,28 @@ export default function SalarySlip() {
             {netSalary.toFixed(0)} PKR
           </div>
         </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={handleSave}
-            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600  "
-          >
-            Save
-          </button>
-        </div>
+        {/* Save Button sirf create mode me */}
+        {mode === "create" && (
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={handleSave}
+              className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600  "
+            >
+              Save
+            </button>
+          </div>
+        )}
+        {/* Print Button (sirf view mode ke liye) */}
+        {location.state?.mode === "view" && (
+          <div className="flex justify-end mt-4 no-print">
+            <button
+              onClick={handlePrint}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 no-print"
+            >
+              Print
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

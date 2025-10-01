@@ -23,7 +23,7 @@ export default function SalaryForm() {
     "November",
     "December",
   ];
-  const years = [2023, 2024, 2025];
+  const years = [2025, 2024, 2023, 2022];
 
   // ✅ Backend se employees fetch karo
   useEffect(() => {
@@ -58,8 +58,10 @@ export default function SalaryForm() {
     // ✅ SalarySlip page pe navigate with data
     navigate("/salaryslip", {
       state: {
+        mode: "create", // ✅ naya flag
         employee_id: selectedEmp.id,
         employee_name: selectedEmp.name,
+        designation: selectedEmp.designation,
         month,
         year,
         mainSalary: selectedEmp.mainSalary,
